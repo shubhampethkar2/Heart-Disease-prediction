@@ -1,6 +1,7 @@
 from flask import Flask, request, render_template
 import pickle
 import numpy as np
+import os
 
 app = Flask(__name__)
 
@@ -11,7 +12,6 @@ scaler = pickle.load(open('scaler.pkl', 'rb'))
 # Prediction function
 def predict(model, scaler, male, age, currentSmoker, cigsPerDay, BPMeds, prevalentStroke, prevalentHyp, diabetes,
             totChol, sysBP, diaBP, BMI, heartRate, glucose):
-    # Encode categorical variables
     male_encoded = 1 if male.lower() == "male" else 0
     currentSmoker_encoded = 1 if currentSmoker.lower() == "yes" else 0
     BPMeds_encoded = 1 if BPMeds.lower() == "yes" else 0
@@ -19,14 +19,9 @@ def predict(model, scaler, male, age, currentSmoker, cigsPerDay, BPMeds, prevale
     prevalentHyp_encoded = 1 if prevalentHyp.lower() == "yes" else 0
     diabetes_encoded = 1 if diabetes.lower() == "yes" else 0
 
-    # Prepare features array
     features = np.array([[male_encoded, age, currentSmoker_encoded, cigsPerDay, BPMeds_encoded, prevalentStroke_encoded,
                           prevalentHyp_encoded, diabetes_encoded, totChol, sysBP, diaBP, BMI, heartRate, glucose]])
-
-    # Scale the features
     scaled_features = scaler.transform(features)
-
-    # Predict using the model
     result = model.predict(scaled_features)
 
     return result[0]
@@ -60,4 +55,5 @@ def predict_route():
         return render_template('index.html', prediction=prediction_text)
 
 if __name__ == '__main__':
-    app.run(debug=True)
+    port = int(os.environ.get('PORT', 5000))
+    app.run(host='0.0.0.0', port=port, debug=True)
